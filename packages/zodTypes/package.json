@@ -1,21 +1,18 @@
 {
-  "name": "@repo/database",
+  "name": "@repo/zodtypes",
   "module": "index.ts",
   "type": "module",
   "private": true,
-  "scripts": {
-  },
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "export": {
+    "zodTypes": "./index"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
-  "export" : {
-      "client": "./index.ts"
-  },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "prisma": "^6.5.0"
+    "zod": "^3.24.2"
   }
 }
