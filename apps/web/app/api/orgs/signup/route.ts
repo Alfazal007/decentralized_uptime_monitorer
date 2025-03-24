@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tryCatchPromise } from "../../helper/tryCatch";
+import { tryCatchPromise } from "../../../helper/tryCatch";
 import { SignupOrg } from "@repo/zodtypes/types/orgTypes/signupOrg";
 import { prismaClient } from "@repo/database";
-import { assert } from "node:console";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
     const body = await tryCatchPromise(req.json());
@@ -37,20 +37,37 @@ export async function POST(req: NextRequest) {
         })
     }
 
-    if (!isPresentInDataBase.data) {
+    // this should be empty
+    if (isPresentInDataBase.data) {
         return Response.json({ error: "Use a different name" }, {
             status: 400
         })
     }
-    // TODO:: password hash and output checks
+    const hashedPasswordResult = await tryCatchPromise(bcrypt.hash(zodOutput.data.password, 12));
+    if (hashedPasswordResult.error) {
+        return Response.json({ error: "Issue hashing the password before storing it into the datbase" }, {
+            status: 500
+        })
+    }
     const newUserResult = await tryCatchPromise(
         prismaClient.organization.create({
             data: {
                 name: zodOutput.data.name,
-                password: zodOutput.data.password
+                password: hashedPasswordResult.data
+            },
+            select: {
+                id: true
             }
         })
     )
+    if (newUserResult.error) {
+        return Response.json({ error: "Issue writing to the database" }, {
+            status: 500
+        })
+    }
 
-    return Response.json({ username: "someone", email: "someone@gmail.com" })
+    return Response.json({
+        name: zodOutput.data.name,
+        id: newUserResult.data.id
+    }, { status: 201 })
 }
