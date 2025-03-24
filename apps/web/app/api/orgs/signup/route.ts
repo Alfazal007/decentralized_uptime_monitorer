@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { tryCatchPromise } from "../../../helper/tryCatch";
 import { SignupOrg } from "@repo/zodtypes/types/orgTypes/signupOrg";
 import { prismaClient } from "@repo/database";
@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 export async function POST(req: NextRequest) {
     const body = await tryCatchPromise(req.json());
     if (body.error) {
-        return NextResponse
+        return Response
             .json({ error: "no user input" }, {
                 status: 400
             })

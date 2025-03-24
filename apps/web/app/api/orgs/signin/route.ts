@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { tryCatchPromise } from "../../../helper/tryCatch";
 import { SignInOrg } from "@repo/zodtypes/types/orgTypes/signinOrgs";
 import { prismaClient } from "@repo/database";
@@ -8,7 +8,7 @@ import { generateAccessToken } from "../../../helper/generateAccesstoken";
 export async function POST(req: NextRequest) {
     const body = await tryCatchPromise(req.json());
     if (body.error) {
-        return NextResponse
+        return Response
             .json({ error: "no user input" }, {
                 status: 400
             })
