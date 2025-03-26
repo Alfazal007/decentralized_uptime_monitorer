@@ -3,10 +3,13 @@ import { processMessage } from "./helpers/processMessage";
 import { IncomingMessageType, MessageManager, type SignupSigninData } from "./managers/processMessage";
 import { signUpCallback } from "./processCallbacks/signupProcessor";
 import type { OutgoingMessageType } from "./processCallbacks/type";
-import { signInCallback } from "./processCallbacks/signinProcessor";
+import { signInCallback, } from "./processCallbacks/signinProcessor";
+import { tryCatchPromise } from "./helpers/tryCatch";
+import { prismaClient } from "@repo/database";
+import { v4 as uuidV4 } from "uuid";
 
-let connectedUsers = new Set();
-export let connectedValidators = new Set();
+let connectedUsers = new Set<ServerWebSocket<unknown>>();
+export let connectedValidators = new Set<ServerWebSocket<unknown>>();
 let messageManager = MessageManager.getInstance();
 
 export function isUserValidator(ws: ServerWebSocket<unknown>) {
@@ -29,10 +32,13 @@ let server = Bun.serve({
         open(ws) {
             connectedUsers.add(ws)
         },
+
         close(ws) {
             connectedUsers.delete(ws);
             connectedValidators.delete(ws)
+            messageManager.removeSocketConnection(ws)
         },
+
         async message(ws, message) {
             let [isValidMessage, jsonMessage] = processMessage(message.toString());
             if (!isValidMessage) {
@@ -77,3 +83,25 @@ let server = Bun.serve({
 });
 
 console.log(`Listening on ${server.hostname}:${server.port}`);
+
+
+
+setInterval(async () => {
+    let websiteUrlsResult = await tryCatchPromise(prismaClient.website.findMany({
+        where: {
+            deleted: false,
+        },
+        select: {
+            url: true,
+        }
+    }))
+    if (websiteUrlsResult.error) {
+        return;
+    }
+    websiteUrlsResult.data.forEach((websiteUrl) => {
+        connectedValidators.forEach((validator) => {
+            let callbackId = uuidV4()
+            // TODO:: Add a callback function
+        })
+    })
+}, 20000)
