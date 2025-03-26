@@ -8,14 +8,14 @@ export enum IncomingMessageType {
     None = "None",
 }
 
-type SignupSigninData = {
+export type SignupSigninData = {
     username: string,
     password: string
 }
 
-type CallbackData = {
+export type CallbackData = {
     statusCode: number,
-    callbackId: string
+    callbackId: string,
 }
 
 export class MessageManager {

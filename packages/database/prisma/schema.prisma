@@ -28,6 +28,13 @@ model StatusTimeStamp {
   status    Status   @default(Grey)
 }
 
+model Validator {
+  id       Int       @id @default(autoincrement())
+  username     String    @unique
+  password String
+  publicKey String?
+}
+
 enum Status {
   Good
   Bad

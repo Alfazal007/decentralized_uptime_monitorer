@@ -1,9 +1,12 @@
 import type { ServerWebSocket } from "bun";
 import { processMessage } from "./helpers/processMessage";
-import { IncomingMessageType, MessageManager } from "./managers/processMessage";
+import { IncomingMessageType, MessageManager, type SignupSigninData } from "./managers/processMessage";
+import { signUpCallback } from "./processCallbacks/signupProcessor";
+import type { OutgoingMessageType } from "./processCallbacks/type";
+import { signInCallback } from "./processCallbacks/signinProcessor";
 
 let connectedUsers = new Set();
-let connectedValidators = new Set();
+export let connectedValidators = new Set();
 let messageManager = MessageManager.getInstance();
 
 export function isUserValidator(ws: ServerWebSocket<unknown>) {
@@ -30,7 +33,7 @@ let server = Bun.serve({
             connectedUsers.delete(ws);
             connectedValidators.delete(ws)
         },
-        message(ws, message) {
+        async message(ws, message) {
             let [isValidMessage, jsonMessage] = processMessage(message.toString());
             if (!isValidMessage) {
                 return;
@@ -42,12 +45,27 @@ let server = Bun.serve({
 
             switch (typeOfMessage) {
                 case IncomingMessageType.Signup:
-                    // TODO:: send message to the database, upsert
+                    console.log("signup message")
+                    let messageToProcessSignup = messageToWriteToDB as SignupSigninData;
+                    let signUpResult = await signUpCallback(messageToProcessSignup.username, messageToProcessSignup.password)
+                    let messageToSendSignup: OutgoingMessageType = {
+                        statusData: signUpResult
+                    }
+                    ws.send(JSON.stringify(messageToSendSignup))
                     break
+
                 case IncomingMessageType.Signin:
-                    // TODO:: query server and update the current state
+                    console.log("signin message")
+                    let messageToProcessSignin = messageToWriteToDB as SignupSigninData;
+                    let signInResult = await signInCallback(messageToProcessSignin.username, messageToProcessSignin.password, ws)
+                    let messageToSendSignin: OutgoingMessageType = {
+                        statusData: signInResult
+                    }
+                    ws.send(JSON.stringify(messageToSendSignin))
                     break
+
                 case IncomingMessageType.Callback:
+                    console.log("callback message")
                     // TODO:: this is for  other things
                     break
                 default:

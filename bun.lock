@@ -37,6 +37,10 @@
     },
     "apps/websocket": {
       "name": "websocket",
+      "dependencies": {
+        "@repo/database": "*",
+        "bcryptjs": "^3.0.2",
+      },
       "devDependencies": {
         "@types/bun": "latest",
       },
