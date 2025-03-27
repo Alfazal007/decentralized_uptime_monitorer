@@ -72,7 +72,7 @@ let server = Bun.serve({
 
                 case IncomingMessageType.Callback:
                     console.log("callback message")
-                    // TODO:: this is for  other things
+                    // TODO:: this is for  other things delete the callbacks from manager
                     break
                 default:
                     break
@@ -83,7 +83,6 @@ let server = Bun.serve({
 });
 
 console.log(`Listening on ${server.hostname}:${server.port}`);
-
 
 
 setInterval(async () => {
@@ -101,7 +100,28 @@ setInterval(async () => {
     websiteUrlsResult.data.forEach((websiteUrl) => {
         connectedValidators.forEach((validator) => {
             let callbackId = uuidV4()
-            // TODO:: Add a callback function
+            let newCallbackFunction = async (status: "Good" | "Bad") => {
+                try {
+                    const website = await prismaClient.website.findFirst({
+                        where: {
+                            url: websiteUrl.url
+                        }
+                    })
+                    if (!website) {
+                        return;
+                    }
+                    await prismaClient.$transaction(async (tx) => {
+                        await tx.statusTimeStamp.create({
+                            data: { status: status, id: website.id }
+                        });
+                    });
+                } catch (err) {
+                    return
+                }
+            }
+            messageManager.addCallback(validator, callbackId, newCallbackFunction)
+            // TODO:: Send the message to validator to validate the urls
+            validator.send()
         })
     })
 }, 20000)

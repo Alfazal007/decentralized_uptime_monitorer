@@ -15,23 +15,26 @@ model Organization {
 }
 
 model Website {
-  id             Int          @id @default(autoincrement())
-  url            String
-  organizationId Int
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  deleted        Boolean      @default(false)
+  id               Int               @id @default(autoincrement())
+  url              String
+  organizationId   Int
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  deleted          Boolean           @default(false)
+  statusTimeStamps StatusTimeStamp[]
 }
 
 model StatusTimeStamp {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   status    Status   @default(Grey)
+  websiteId Int
+  website   Website  @relation(fields: [websiteId], references: [id])
 }
 
 model Validator {
-  id       Int       @id @default(autoincrement())
-  username     String    @unique
-  password String
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  password  String
   publicKey String?
 }
 

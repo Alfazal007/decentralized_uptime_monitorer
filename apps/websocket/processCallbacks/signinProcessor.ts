@@ -1,7 +1,7 @@
 import { tryCatchPromise } from "../helpers/tryCatch";
 import { prismaClient } from "@repo/database";
 import bcrypt from "bcryptjs";
-import { connectedValidators } from "..";
+import { connectedValidators, } from "..";
 import type { ServerWebSocket } from "bun";
 
 export enum StatusSignin {

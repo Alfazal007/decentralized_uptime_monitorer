@@ -20,7 +20,7 @@ export type CallbackData = {
 
 export class MessageManager {
     private static messageManager: MessageManager;
-    private callbackMap: Map<ServerWebSocket<unknown>, Map<string, () => {}[]>>;
+    private callbackMap: Map<ServerWebSocket<unknown>, Map<string, (status: "Good" | "Bad") => Promise<void>>>;
     // ws -> callbackId -> callback_function
 
     private constructor() {
@@ -46,7 +46,12 @@ export class MessageManager {
         }
     }
 
-    addCallback(ws: ServerWebSocket<unknown>, callbackId: string) {
+    addCallback(ws: ServerWebSocket<unknown>, callbackId: string, functionToAdd: (status: "Good" | "Bad") => Promise<void>) {
+        let callbackFunctions = this.callbackMap.get(ws)
+        if (!callbackFunctions) {
+            this.callbackMap.set(ws, new Map())
+        }
+        this.callbackMap.get(ws)?.set(callbackId, functionToAdd)
     }
 
     convertAndProcessMessage(ws: ServerWebSocket<unknown>, jsonMessage: object): [IncomingMessageType, SignupSigninData | CallbackData | null] {
