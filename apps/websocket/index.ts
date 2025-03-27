@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from "bun";
 import { processMessage } from "./helpers/processMessage";
-import { IncomingMessageType, MessageManager, type SignupSigninData } from "./managers/processMessage";
+import { IncomingMessageType, MessageManager, type CallbackData, type SignupSigninData } from "./managers/processMessage";
 import { signUpCallback } from "./processCallbacks/signupProcessor";
 import type { OutgoingMessageType } from "./processCallbacks/type";
 import { signInCallback, } from "./processCallbacks/signinProcessor";
@@ -72,7 +72,16 @@ let server = Bun.serve({
 
                 case IncomingMessageType.Callback:
                     console.log("callback message")
-                    // TODO:: this is for  other things delete the callbacks from manager
+                    let callbackMessageToProcess = messageToWriteToDB as CallbackData;
+                    if (!callbackMessageToProcess.statusCode || !callbackMessageToProcess.callbackId) {
+                        return;
+                    }
+                    let functionToExecute = messageManager.getCallbackFunction(ws, callbackMessageToProcess.callbackId)
+                    if (!functionToExecute) {
+                        return;
+                    }
+                    messageManager.removeCallback(ws, callbackMessageToProcess.callbackId)
+                    await tryCatchPromise(functionToExecute(callbackMessageToProcess.statusCode == 200 ? "Good" : "Bad"))
                     break
                 default:
                     break
@@ -85,7 +94,8 @@ let server = Bun.serve({
 console.log(`Listening on ${server.hostname}:${server.port}`);
 
 
-setInterval(async () => {
+//setInterval(async () => {
+setTimeout(async () => {
     let websiteUrlsResult = await tryCatchPromise(prismaClient.website.findMany({
         where: {
             deleted: false,
@@ -112,7 +122,7 @@ setInterval(async () => {
                     }
                     await prismaClient.$transaction(async (tx) => {
                         await tx.statusTimeStamp.create({
-                            data: { status: status, id: website.id }
+                            data: { status: status, websiteId: website.id }
                         });
                     });
                 } catch (err) {
@@ -120,8 +130,11 @@ setInterval(async () => {
                 }
             }
             messageManager.addCallback(validator, callbackId, newCallbackFunction)
-            // TODO:: Send the message to validator to validate the urls
-            validator.send()
+            validator.send(JSON.stringify({
+                type: "validate",
+                url: websiteUrl,
+                callbackId
+            }))
         })
     })
-}, 20000)
+}, 10000)

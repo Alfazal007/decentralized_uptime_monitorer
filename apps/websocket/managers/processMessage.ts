@@ -34,6 +34,13 @@ export class MessageManager {
         return MessageManager.messageManager;
     }
 
+
+    getCallbackFunction(ws: ServerWebSocket<unknown>, callbackId: string) {
+        let callback = this.callbackMap.get(ws)?.get(callbackId);
+        return callback
+    }
+
+
     removeSocketConnection(ws: ServerWebSocket<unknown>) {
         this.callbackMap.delete(ws);
     }

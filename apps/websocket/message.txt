@@ -1,0 +1,17 @@
+{
+    "password": "12345678",
+    "username": "validator2",
+    "type": "Signup"
+}
+
+{
+    "password": "12345678",
+    "username": "validator2",
+    "type": "Signin"
+}
+
+{
+    "statusCode": "12345678",
+    "callbackId": "validator2",
+    "type": "Callback"
+}
