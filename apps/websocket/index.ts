@@ -94,8 +94,8 @@ let server = Bun.serve({
 console.log(`Listening on ${server.hostname}:${server.port}`);
 
 
-//setInterval(async () => {
-setTimeout(async () => {
+setInterval(async () => {
+    //setTimeout(async () => {
     let websiteUrlsResult = await tryCatchPromise(prismaClient.website.findMany({
         where: {
             deleted: false,
@@ -132,7 +132,7 @@ setTimeout(async () => {
             messageManager.addCallback(validator, callbackId, newCallbackFunction)
             validator.send(JSON.stringify({
                 type: "validate",
-                url: websiteUrl,
+                url: websiteUrl.url,
                 callbackId
             }))
         })
