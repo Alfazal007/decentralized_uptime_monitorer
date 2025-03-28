@@ -6,46 +6,23 @@ import { Activity, ArrowLeft, Moon, Plus, Sun } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/UserContext";
 import AuthProtection from "../components/authProtector";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import axios from "axios";
 
-const websites = [
-    {
-        id: 1,
-        name: "Example.com",
-        url: "https://example.com",
-        states: [
-            { status: "Good", timestamp: "2024-03-20 15:00:00" },
-            { status: "Good", timestamp: "2024-03-20 14:45:00" },
-            { status: "Bad", timestamp: "2024-03-20 14:30:00" },
-            { status: "Good", timestamp: "2024-03-20 14:15:00" },
-            { status: "Good", timestamp: "2024-03-20 14:00:00" },
-            { status: "Grey", timestamp: "2024-03-20 13:45:00" },
-            { status: "Good", timestamp: "2024-03-20 13:30:00" },
-            { status: "Good", timestamp: "2024-03-20 13:15:00" },
-            { status: "Good", timestamp: "2024-03-20 13:00:00" },
-            { status: "Good", timestamp: "2024-03-20 12:45:00" },
-        ],
-    },
-    {
-        id: 2,
-        name: "Test Site",
-        url: "https://test.example.com",
-        states: [
-            { status: "Bad", timestamp: "2024-03-20 15:00:00" },
-            { status: "Bad", timestamp: "2024-03-20 14:45:00" },
-            { status: "Grey", timestamp: "2024-03-20 14:30:00" },
-            { status: "Grey", timestamp: "2024-03-20 14:15:00" },
-            { status: "Good", timestamp: "2024-03-20 14:00:00" },
-            { status: "Good", timestamp: "2024-03-20 13:45:00" },
-            { status: "Good", timestamp: "2024-03-20 13:30:00" },
-            { status: "Good", timestamp: "2024-03-20 13:15:00" },
-            { status: "Good", timestamp: "2024-03-20 13:00:00" },
-            { status: "Good", timestamp: "2024-03-20 12:45:00" },
-        ],
-    },
-];
+type WebsiteData = {
+    id: number;
+    url: string;
+    statusTimeStamps: {
+        status: "Good" | "Bad" | "Grey";
+        id: number;
+        createdAt: Date;
+        websiteId: number;
+    }[]
+}
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,6 +38,26 @@ const getStatusColor = (status: string) => {
 export default function Dashboard() {
     const { theme, setTheme } = useTheme();
     const { user } = useContext(UserContext)
+    const router = useRouter()
+    const [websites, setWebsite] = useState<WebsiteData[]>([])
+
+    useEffect(() => {
+        getData()
+    }, [])
+
+    async function getData() {
+        try {
+            const response = await axios.get("http://localhost:3000/api/protected/orgs/getCurrentWebsiteStatus", {
+                withCredentials: true
+            })
+            console.log(response.data)
+            if (response.status == 200) {
+                setWebsite(response.data)
+            }
+        } catch (err) {
+            toast("Issue fetching the data")
+        }
+    }
 
     if (!user) {
         return (
@@ -111,18 +108,20 @@ export default function Dashboard() {
                                     <AccordionItem value="states">
                                         <AccordionTrigger>
                                             <div className="flex items-center gap-4">
-                                                <h2 className="text-xl font-semibold">{website.name}</h2>
-                                                <span className="text-sm text-muted-foreground">{website.url}</span>
-                                                <div className={`w-3 h-3 rounded-full ${getStatusColor(website.states[0].status)}`} />
+                                                <h2 className="text-xl font-semibold">{website.url}</h2>
+                                                {
+                                                    // @ts-ignore
+                                                    <div className={`w-3 h-3 rounded-full ${website.statusTimeStamps.length > 0 ? getStatusColor(website.statusTimeStamps[0].status) : 'bg-gray-400'}`} />
+                                                }
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
                                             <div className="flex gap-2 mt-4 overflow-x-auto pb-4">
-                                                {website.states.slice().reverse().map((state, index) => (
+                                                {website.statusTimeStamps.map((state, index) => (
                                                     <div key={index} className="flex flex-col items-center gap-2 min-w-[100px]">
                                                         <div className={`w-3 h-3 rounded-full ${getStatusColor(state.status)}`} />
                                                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                                            {new Date(state.timestamp).toLocaleTimeString()}
+                                                            {new Date(state.createdAt).toLocaleTimeString()}
                                                         </span>
                                                     </div>
                                                 ))}
